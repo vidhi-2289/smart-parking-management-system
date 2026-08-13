@@ -2,9 +2,17 @@ import React from 'react';
 import ParkingSlot from './ParkingSlot';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 
-export default function ParkingGrid({ slots = [], highlightedSlotId = null }) {
+export default function ParkingGrid({
+  slots = [],
+  highlightedSlotId = null,
+  selectedSlotId = null,
+  onSelectSlot
+}) {
   const zoneASlots = slots.filter((slot) => slot.zone === 'Zone A');
   const zoneBSlots = slots.filter((slot) => slot.zone === 'Zone B');
+
+  const availableCount = slots.filter((s) => !s.occupied).length;
+  const occupiedCount = slots.filter((s) => s.occupied).length;
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm mb-8">
@@ -23,11 +31,11 @@ export default function ParkingGrid({ slots = [], highlightedSlotId = null }) {
         <div className="flex items-center gap-4 text-xs font-semibold">
           <div className="flex items-center gap-1.5 text-emerald-400">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            <span>Available (12)</span>
+            <span>Available ({availableCount})</span>
           </div>
           <div className="flex items-center gap-1.5 text-rose-400">
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-            <span>Occupied (8)</span>
+            <span>Occupied ({occupiedCount})</span>
           </div>
         </div>
       </div>
@@ -50,6 +58,8 @@ export default function ParkingGrid({ slots = [], highlightedSlotId = null }) {
                 key={slot.id}
                 slot={slot}
                 isRecommended={highlightedSlotId === slot.id}
+                isSelected={selectedSlotId === slot.id}
+                onSelectSlot={onSelectSlot}
               />
             ))}
           </div>
@@ -89,6 +99,8 @@ export default function ParkingGrid({ slots = [], highlightedSlotId = null }) {
                 key={slot.id}
                 slot={slot}
                 isRecommended={highlightedSlotId === slot.id}
+                isSelected={selectedSlotId === slot.id}
+                onSelectSlot={onSelectSlot}
               />
             ))}
           </div>

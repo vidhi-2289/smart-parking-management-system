@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Navigation, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Navigation, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 export default function RecommendationCard({ recommendedSlot, onFindBestSlot, isHighlighted }) {
   return (
@@ -34,20 +34,37 @@ export default function RecommendationCard({ recommendedSlot, onFindBestSlot, is
             </p>
           </div>
         ) : (
-          <p className="text-xs text-slate-400 mb-4">No available slot found.</p>
+          <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl mb-4 text-center">
+            <div className="flex items-center justify-center gap-2 text-rose-400 font-bold text-sm mb-1">
+              <AlertTriangle className="w-4 h-4" />
+              <span>Facility Full</span>
+            </div>
+            <p className="text-xs text-slate-400">
+              No parking spaces currently available.
+            </p>
+          </div>
         )}
       </div>
 
       <button
         onClick={onFindBestSlot}
+        disabled={!recommendedSlot}
         className={`w-full py-3 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-lg ${
-          isHighlighted
+          !recommendedSlot
+            ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700/50 shadow-none'
+            : isHighlighted
             ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20'
             : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
         }`}
       >
         <Sparkles className="w-4 h-4" />
-        <span>{isHighlighted ? 'Slot Highlighted in Map' : 'Find Best Slot'}</span>
+        <span>
+          {!recommendedSlot
+            ? 'No Available Slots'
+            : isHighlighted
+            ? 'Slot Highlighted on Map'
+            : 'Find Best Slot'}
+        </span>
       </button>
     </div>
   );

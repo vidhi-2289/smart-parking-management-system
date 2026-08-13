@@ -1,25 +1,37 @@
 import React from 'react';
 import { Car, CheckCircle2, Navigation } from 'lucide-react';
 
-export default function ParkingSlot({ slot, isRecommended = false }) {
+export default function ParkingSlot({
+  slot,
+  isRecommended = false,
+  isSelected = false,
+  onSelectSlot
+}) {
   const isOccupied = slot.occupied;
 
   return (
     <div
-      className={`relative p-4 rounded-xl border transition-all duration-200 flex flex-col justify-between h-32 ${
-        isRecommended
+      onClick={() => onSelectSlot && onSelectSlot(slot.id)}
+      className={`relative p-4 rounded-xl border transition-all duration-200 flex flex-col justify-between h-32 cursor-pointer ${
+        isSelected
+          ? 'ring-2 ring-indigo-400 border-indigo-400 shadow-lg shadow-indigo-500/20 bg-indigo-950/40'
+          : isRecommended
           ? 'bg-indigo-950/60 border-indigo-500 shadow-lg shadow-indigo-500/20 ring-2 ring-indigo-500'
           : isOccupied
           ? 'bg-slate-900/90 border-rose-500/30 hover:border-rose-500/50'
           : 'bg-slate-900/90 border-emerald-500/30 hover:border-emerald-500/50'
       }`}
     >
-      {/* Recommended Tag Badge */}
-      {isRecommended && (
+      {/* Recommended / Selected Tag Badge */}
+      {isRecommended ? (
         <span className="absolute -top-2.5 right-3 px-2 py-0.5 bg-indigo-600 text-white text-[10px] font-extrabold uppercase rounded-full shadow-sm">
           Best Slot
         </span>
-      )}
+      ) : isSelected ? (
+        <span className="absolute -top-2.5 right-3 px-2 py-0.5 bg-indigo-500/30 border border-indigo-400 text-indigo-300 text-[10px] font-extrabold uppercase rounded-full shadow-sm">
+          Selected
+        </span>
+      ) : null}
 
       {/* Top row: Slot ID & Status Icon */}
       <div className="flex items-center justify-between">

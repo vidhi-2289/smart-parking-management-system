@@ -1,48 +1,28 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Header from '../components/Header';
 import StatCards from '../components/StatCard';
 import ParkingGrid from '../components/ParkingGrid';
 import RecommendationCard from '../components/RecommendationCard';
 import ActivityFeed from '../components/ActivityFeed';
 import StatusCard from '../components/StatusCard';
+import TestSensorPanel from '../components/TestSensorPanel';
 
-import {
-  initialParkingSlots,
-  initialActivities,
-  systemStatusData
-} from '../data/parkingData';
+import { useParkingSystem } from '../hooks/useParkingSystem';
 
 export default function Dashboard() {
-  const [slots] = useState(initialParkingSlots);
-  const [activities] = useState(initialActivities);
-  const [status] = useState(systemStatusData);
-  const [highlightedSlotId, setHighlightedSlotId] = useState(null);
-
-  // Summary counts
-  const totalSlots = slots.length;
-  const availableCount = slots.filter((s) => !s.occupied).length;
-  const occupiedCount = slots.filter((s) => s.occupied).length;
-
-  // Best available slot (closest to entrance among available)
-  const availableSlots = slots.filter((s) => !s.occupied);
-  const recommendedSlot = availableSlots.length > 0
-    ? [...availableSlots].sort((a, b) => a.distanceFromEntrance - b.distanceFromEntrance)[0]
-    : null;
-
-  const handleFindBestSlot = () => {
-    if (recommendedSlot) {
-      if (highlightedSlotId === recommendedSlot.id) {
-        setHighlightedSlotId(null);
-      } else {
-        setHighlightedSlotId(recommendedSlot.id);
-        // Scroll smoothly to parking grid if needed
-        const gridElement = document.getElementById('live-parking-overview');
-        if (gridElement) {
-          gridElement.scrollIntoView({ behavior: 'smooth' });
-        }
-      }
-    }
-  };
+  const {
+    slots,
+    activities,
+    status,
+    stats,
+    selectedSlot,
+    selectedSlotId,
+    setSelectedSlotId,
+    highlightedSlotId,
+    recommendedSlot,
+    updateSlotSensorReading,
+    handleFindBestSlot
+  } = useParkingSystem();
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
@@ -51,9 +31,17 @@ export default function Dashboard() {
 
       {/* Summary Statistics */}
       <StatCards
-        total={totalSlots}
-        available={availableCount}
-        occupied={occupiedCount}
+        total={stats.total}
+        available={stats.available}
+        occupied={stats.occupied}
+      />
+
+      {/* Module 2 Local Pipeline Test Control */}
+      <TestSensorPanel
+        slots={slots}
+        selectedSlot={selectedSlot}
+        onSelectSlot={setSelectedSlotId}
+        onSimulateReading={updateSlotSensorReading}
       />
 
       {/* Live Parking Grid */}
@@ -61,6 +49,8 @@ export default function Dashboard() {
         <ParkingGrid
           slots={slots}
           highlightedSlotId={highlightedSlotId}
+          selectedSlotId={selectedSlotId}
+          onSelectSlot={setSelectedSlotId}
         />
       </div>
 
