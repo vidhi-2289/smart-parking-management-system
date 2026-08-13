@@ -16,7 +16,7 @@ export default function Sidebar({ activeTab = 'dashboard', onTabChange }) {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, enabled: true },
     { id: 'live', label: 'Live Parking', icon: Car, enabled: true },
-    { id: 'simulator', label: 'Sensor Simulator', icon: Cpu, enabled: false },
+    { id: 'simulator', label: 'Sensor Simulator', icon: Cpu, enabled: true },
     { id: 'activity', label: 'Activity', icon: History, enabled: false },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, enabled: false }
   ];
@@ -100,7 +100,7 @@ export default function Sidebar({ activeTab = 'dashboard', onTabChange }) {
                   <span>{item.label}</span>
                   {!item.enabled && (
                     <span className="ml-auto text-[10px] uppercase font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-500 border border-slate-700/50">
-                      Module {item.id === 'simulator' ? '3' : item.id === 'activity' ? '5' : '5'}
+                      Module 5
                     </span>
                   )}
                 </button>

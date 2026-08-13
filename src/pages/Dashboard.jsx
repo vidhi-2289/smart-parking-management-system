@@ -7,9 +7,7 @@ import ActivityFeed from '../components/ActivityFeed';
 import StatusCard from '../components/StatusCard';
 import TestSensorPanel from '../components/TestSensorPanel';
 
-import { useParkingSystem } from '../hooks/useParkingSystem';
-
-export default function Dashboard() {
+export default function Dashboard({ system, onNavigateToSimulator }) {
   const {
     slots,
     activities,
@@ -20,9 +18,9 @@ export default function Dashboard() {
     setSelectedSlotId,
     highlightedSlotId,
     recommendedSlot,
-    updateSlotSensorReading,
+    sendSensorReading,
     handleFindBestSlot
-  } = useParkingSystem();
+  } = system;
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
@@ -36,12 +34,13 @@ export default function Dashboard() {
         occupied={stats.occupied}
       />
 
-      {/* Module 2 Local Pipeline Test Control */}
+      {/* IoT Quick Sensor Trigger Control */}
       <TestSensorPanel
         slots={slots}
         selectedSlot={selectedSlot}
         onSelectSlot={setSelectedSlotId}
-        onSimulateReading={updateSlotSensorReading}
+        onSimulateReading={sendSensorReading}
+        onNavigateToSimulator={onNavigateToSimulator}
       />
 
       {/* Live Parking Grid */}
