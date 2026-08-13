@@ -48,6 +48,7 @@ export default function TestSensorPanel({
         {onNavigateToSimulator && (
           <button
             onClick={onNavigateToSimulator}
+            aria-label="Open Dedicated Sensor Simulator Page"
             className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 rounded-xl transition-all self-start sm:self-auto flex items-center gap-1.5"
           >
             <Cpu className="w-3.5 h-3.5" />
@@ -59,10 +60,14 @@ export default function TestSensorPanel({
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
         {/* Slot Selector */}
         <div>
-          <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">
+          <label
+            htmlFor="quick-trigger-slot"
+            className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider"
+          >
             Target Slot
           </label>
           <select
+            id="quick-trigger-slot"
             value={selectedSlot?.id || 'A3'}
             onChange={(e) => onSelectSlot(e.target.value)}
             className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-indigo-500"
@@ -77,10 +82,14 @@ export default function TestSensorPanel({
 
         {/* Distance Input */}
         <div>
-          <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">
+          <label
+            htmlFor="quick-trigger-distance"
+            className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider"
+          >
             Distance (cm)
           </label>
           <input
+            id="quick-trigger-distance"
             type="number"
             min="0"
             max="500"

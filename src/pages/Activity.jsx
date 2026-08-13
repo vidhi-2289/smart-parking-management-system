@@ -1,25 +1,24 @@
 import React, { useState } from 'react';
 import {
   History,
-  Car,
-  ArrowRightLeft,
   Filter,
   Clock,
   Database,
   ArrowUpRight,
-  ArrowDownLeft
+  ArrowDownLeft,
+  Loader2
 } from 'lucide-react';
 
 export default function Activity({ system }) {
-  const { activities = [], eventStats = {}, isCloudConnected } = system;
-  const [filterType, setFilterType] = useState('all'); // 'all' | 'entered' | 'left' | 'zoneA' | 'zoneB'
+  const { activities = [], eventStats = {}, isCloudConnected, isInitialLoading } = system;
+  const [filterType, setFilterType] = useState('all');
 
   // Apply filtering
   const filteredActivities = activities.filter((act) => {
     const isEntered = act.eventType === 'vehicle_entered' || act.type === 'detected';
     const isLeft = act.eventType === 'vehicle_left' || act.type === 'left';
-    const isZoneA = act.slotId.startsWith('A');
-    const isZoneB = act.slotId.startsWith('B');
+    const isZoneA = act.slotId?.startsWith('A');
+    const isZoneB = act.slotId?.startsWith('B');
 
     if (filterType === 'entered') return isEntered;
     if (filterType === 'left') return isLeft;
@@ -71,7 +70,7 @@ export default function Activity({ system }) {
               Total Events
             </span>
             <div className="text-2xl font-extrabold text-white mt-1">
-              {eventStats.total || 0}
+              {isInitialLoading ? <Loader2 className="w-6 h-6 animate-spin text-slate-500" /> : eventStats.total || 0}
             </div>
             <p className="text-xs text-slate-500 mt-0.5">Cloud event records</p>
           </div>
@@ -87,7 +86,7 @@ export default function Activity({ system }) {
               Vehicle Entries
             </span>
             <div className="text-2xl font-extrabold text-rose-400 mt-1">
-              {eventStats.entries || 0}
+              {isInitialLoading ? <Loader2 className="w-6 h-6 animate-spin text-slate-500" /> : eventStats.entries || 0}
             </div>
             <p className="text-xs text-slate-500 mt-0.5">Vehicle detected (&lt;20cm)</p>
           </div>
@@ -103,7 +102,7 @@ export default function Activity({ system }) {
               Vehicle Exits
             </span>
             <div className="text-2xl font-extrabold text-emerald-400 mt-1">
-              {eventStats.exits || 0}
+              {isInitialLoading ? <Loader2 className="w-6 h-6 animate-spin text-slate-500" /> : eventStats.exits || 0}
             </div>
             <p className="text-xs text-slate-500 mt-0.5">Vehicle left (&ge;20cm)</p>
           </div>
@@ -119,7 +118,13 @@ export default function Activity({ system }) {
               Latest Event
             </span>
             <div className="text-lg font-extrabold text-white mt-1 truncate max-w-[120px]">
-              {eventStats.latestEvent ? `Slot ${eventStats.latestEvent.slotId}` : 'None'}
+              {isInitialLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin text-slate-500" />
+              ) : eventStats.latestEvent ? (
+                `Slot ${eventStats.latestEvent.slotId}`
+              ) : (
+                'None'
+              )}
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
               {eventStats.latestEvent ? eventStats.latestEvent.time : 'No activity yet'}
@@ -139,8 +144,8 @@ export default function Activity({ system }) {
             <h3 className="font-bold text-white text-base">Filter Event Logs</h3>
           </div>
 
-          {/* Filter Pills */}
-          <div className="flex flex-wrap gap-2">
+          {/* Filter Pills with Accessibility aria-label */}
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Activity Filter Options">
             {[
               { id: 'all', label: 'All Events' },
               { id: 'entered', label: 'Vehicle Entered' },
@@ -151,6 +156,7 @@ export default function Activity({ system }) {
               <button
                 key={tab.id}
                 onClick={() => setFilterType(tab.id)}
+                aria-pressed={filterType === tab.id}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                   filterType === tab.id
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
@@ -165,7 +171,7 @@ export default function Activity({ system }) {
 
         {/* Activity Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-xs" aria-label="Parking Events Table">
             <thead>
               <tr className="border-b border-slate-800 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
                 <th className="py-3 px-4">Slot ID</th>
@@ -175,7 +181,22 @@ export default function Activity({ system }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 font-medium">
-              {filteredActivities.length > 0 ? (
+              {isInitialLoading ? (
+                <tr>
+                  <td colSpan="4" className="py-12 text-center text-slate-400">
+                    <div className="inline-flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+                      <span>Loading activity events from Cloud Firestore...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : activities.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="py-12 text-center text-slate-500 italic">
+                    No parking events recorded yet.
+                  </td>
+                </tr>
+              ) : filteredActivities.length > 0 ? (
                 filteredActivities.map((act) => {
                   const isEntered =
                     act.eventType === 'vehicle_entered' || act.type === 'detected';
@@ -213,7 +234,7 @@ export default function Activity({ system }) {
                 })
               ) : (
                 <tr>
-                  <td colSpan="4" className="py-8 text-center text-slate-500 italic">
+                  <td colSpan="4" className="py-12 text-center text-slate-500 italic">
                     No activity logs match the selected filter.
                   </td>
                 </tr>

@@ -23,8 +23,9 @@ export function useParkingSystem() {
   const [highlightedSlotId, setHighlightedSlotId] = useState(null);
   const [isAutoSimulating, setIsAutoSimulating] = useState(false);
 
-  // Cloud Firestore Connection State
+  // Cloud Firestore Connection & Loading State
   const [isCloudConnected, setIsCloudConnected] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [cloudError, setCloudError] = useState(null);
 
   // Overall derived statistics
@@ -95,11 +96,13 @@ export function useParkingSystem() {
               setIsCloudConnected(true);
               setCloudError(null);
             }
+            setIsInitialLoading(false);
           },
           (err) => {
             console.error('parkingSlots subscription error:', err);
             setIsCloudConnected(false);
-            setCloudError(err.message);
+            setCloudError(err.message || 'Connection Error');
+            setIsInitialLoading(false);
           }
         );
 
@@ -123,7 +126,8 @@ export function useParkingSystem() {
       } catch (err) {
         console.error('Failed to initialize Cloud Firestore:', err);
         setIsCloudConnected(false);
-        setCloudError(err.message);
+        setCloudError(err.message || 'Connection Error');
+        setIsInitialLoading(false);
       }
     };
 
@@ -151,7 +155,7 @@ export function useParkingSystem() {
   );
 
   /**
-   * Automatic simulation mode timer effect
+   * Automatic simulation mode timer effect (ensures clean cleanup)
    */
   useEffect(() => {
     let timerId = null;
@@ -205,9 +209,17 @@ export function useParkingSystem() {
     activities,
     rawSensorInputs,
     status: {
-      cloudConnection: isCloudConnected ? 'Online' : 'Connecting...',
+      cloudConnection: isCloudConnected
+        ? 'Online'
+        : cloudError
+        ? 'Offline'
+        : 'Connecting...',
       sensorNetwork: 'Active',
-      database: isCloudConnected ? 'Connected' : 'Connecting...'
+      database: isCloudConnected
+        ? 'Connected'
+        : cloudError
+        ? 'Connection Error / Offline'
+        : 'Connecting...'
     },
     stats,
     zoneAStats,
@@ -223,6 +235,7 @@ export function useParkingSystem() {
     sendSensorReading,
     handleFindBestSlot,
     isCloudConnected,
+    isInitialLoading,
     cloudError
   };
 }

@@ -1,17 +1,27 @@
 import React from 'react';
-import { Clock } from 'lucide-react';
+import { Clock, Wifi } from 'lucide-react';
 
-export default function Header() {
+export default function Header({ isCloudConnected = true }) {
   return (
     <header className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800 pb-6">
       <div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
             Smart Parking Dashboard
           </h1>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            System Online
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${
+              isCloudConnected
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+            }`}
+          >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                isCloudConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+              }`}
+            />
+            {isCloudConnected ? 'System Online' : 'Cloud Sync Pending'}
           </span>
         </div>
         <p className="text-sm text-slate-400 mt-1">

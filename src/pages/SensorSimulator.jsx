@@ -207,6 +207,7 @@ export default function SensorSimulator({ system }) {
 
             <button
               onClick={toggleAutoSimulation}
+              aria-label={isAutoSimulating ? 'Stop Auto Simulation' : 'Start Auto Simulation'}
               className={`w-full py-3.5 px-4 rounded-xl font-extrabold text-sm transition-all flex items-center justify-center gap-2 shadow-lg ${
                 isAutoSimulating
                   ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/20'
@@ -249,10 +250,14 @@ export default function SensorSimulator({ system }) {
 
             <div className="space-y-3 mb-4">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">
+                <label
+                  htmlFor="manual-target-slot"
+                  className="block text-[11px] font-semibold text-slate-400 mb-1 uppercase tracking-wider"
+                >
                   Target Parking Slot
                 </label>
                 <select
+                  id="manual-target-slot"
                   value={selectedSlotId}
                   onChange={(e) => setSelectedSlotId(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm font-bold text-white focus:outline-none focus:border-indigo-500"
@@ -266,10 +271,14 @@ export default function SensorSimulator({ system }) {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">
+                <label
+                  htmlFor="manual-distance-cm"
+                  className="block text-[11px] font-semibold text-slate-400 mb-1 uppercase tracking-wider"
+                >
                   Distance (cm)
                 </label>
                 <input
+                  id="manual-distance-cm"
                   type="number"
                   min="0"
                   max="500"
@@ -310,7 +319,7 @@ export default function SensorSimulator({ system }) {
         </div>
       </div>
 
-      {/* Raw Sensor Input History Table (Persisted in Firestore sensorReadings) */}
+      {/* Raw Sensor Input History Table */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 border-b border-slate-800/80 pb-4">
           <div>
@@ -328,7 +337,7 @@ export default function SensorSimulator({ system }) {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-xs" aria-label="Raw Sensor Inputs Table">
             <thead>
               <tr className="border-b border-slate-800 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
                 <th className="py-3 px-4">Sensor ID</th>
@@ -340,41 +349,49 @@ export default function SensorSimulator({ system }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 font-medium">
-              {rawSensorInputs.map((input) => (
-                <tr key={input.id} className="hover:bg-slate-800/40 transition-colors">
-                  <td className="py-3 px-4 font-mono font-bold text-indigo-400">
-                    {input.sensorId}
-                  </td>
-                  <td className="py-3 px-4 font-bold text-white">
-                    {input.slotId}
-                  </td>
-                  <td className="py-3 px-4 text-slate-400">
-                    {input.sensorType}
-                  </td>
-                  <td className="py-3 px-4 font-mono font-bold text-slate-200">
-                    {input.distanceCm} cm
-                  </td>
-                  <td className="py-3 px-4">
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md font-bold text-[11px] ${
-                        input.distanceCm < 20
-                          ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                          : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                      }`}
-                    >
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full ${
-                          input.distanceCm < 20 ? 'bg-rose-400' : 'bg-emerald-400'
-                        }`}
-                      />
-                      {input.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right text-slate-500 text-[11px]">
-                    {input.time}
+              {rawSensorInputs.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="py-12 text-center text-slate-500 italic">
+                    No sensor readings received yet.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                rawSensorInputs.map((input) => (
+                  <tr key={input.id} className="hover:bg-slate-800/40 transition-colors">
+                    <td className="py-3 px-4 font-mono font-bold text-indigo-400">
+                      {input.sensorId}
+                    </td>
+                    <td className="py-3 px-4 font-bold text-white">
+                      {input.slotId}
+                    </td>
+                    <td className="py-3 px-4 text-slate-400">
+                      {input.sensorType}
+                    </td>
+                    <td className="py-3 px-4 font-mono font-bold text-slate-200">
+                      {input.distanceCm} cm
+                    </td>
+                    <td className="py-3 px-4">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md font-bold text-[11px] ${
+                          input.distanceCm < 20
+                            ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                            : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            input.distanceCm < 20 ? 'bg-rose-400' : 'bg-emerald-400'
+                          }`}
+                        />
+                        {input.status}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right text-slate-500 text-[11px]">
+                      {input.time}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

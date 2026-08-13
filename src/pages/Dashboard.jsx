@@ -19,13 +19,14 @@ export default function Dashboard({ system, onNavigateToSimulator }) {
     highlightedSlotId,
     recommendedSlot,
     sendSensorReading,
-    handleFindBestSlot
+    handleFindBestSlot,
+    isCloudConnected
   } = system;
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
       {/* Header */}
-      <Header />
+      <Header isCloudConnected={isCloudConnected} />
 
       {/* Summary Statistics */}
       <StatCards
