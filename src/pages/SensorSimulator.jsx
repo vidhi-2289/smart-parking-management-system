@@ -8,8 +8,6 @@ import {
   Car,
   CheckCircle2,
   Info,
-  Clock,
-  ArrowRight,
   Database
 } from 'lucide-react';
 
@@ -22,7 +20,8 @@ export default function SensorSimulator({ system }) {
     rawSensorInputs,
     isAutoSimulating,
     toggleAutoSimulation,
-    sendSensorReading
+    sendSensorReading,
+    isCloudConnected
   } = system;
 
   const [distanceInput, setDistanceInput] = useState(
@@ -85,7 +84,7 @@ export default function SensorSimulator({ system }) {
         <div className="mt-4 p-3.5 bg-indigo-950/40 border border-indigo-500/20 rounded-xl flex items-start gap-3 text-xs text-indigo-200">
           <Info className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
           <p>
-            Physical IoT sensors are represented using simulated ultrasonic readings in this prototype. Readings fed through this simulator enter the exact processing pipeline that will connect to Cloud Firestore in Module 4.
+            Physical IoT sensors are represented using simulated ultrasonic readings in this prototype. Readings fed through this simulator write to Cloud Firestore and sync across all connected clients in real time.
           </p>
         </div>
       </header>
@@ -114,14 +113,22 @@ export default function SensorSimulator({ system }) {
           <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-300 flex flex-col items-center justify-center">
             <Car className="w-4 h-4 mb-1 text-slate-400" />
             <span>3. Parking State</span>
-            <span className="text-[10px] text-slate-500 font-normal">React State Hook</span>
+            <span className="text-[10px] text-slate-500 font-normal">State Processor</span>
           </div>
 
           {/* Step 4: Cloud Sync */}
-          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400 flex flex-col items-center justify-center">
-            <Database className="w-4 h-4 mb-1 text-amber-400" />
-            <span>4. Cloud Sync</span>
-            <span className="text-[10px] font-bold">Pending / Not Connected</span>
+          <div
+            className={`p-3 rounded-xl flex flex-col items-center justify-center border ${
+              isCloudConnected
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+            }`}
+          >
+            <Database className="w-4 h-4 mb-1" />
+            <span>4. Cloud Firestore</span>
+            <span className="text-[10px] font-bold">
+              {isCloudConnected ? 'Connected / Real-Time Sync' : 'Connecting...'}
+            </span>
           </div>
 
           {/* Step 5: Dashboard */}
@@ -221,7 +228,7 @@ export default function SensorSimulator({ system }) {
           </div>
 
           <div className="mt-4 pt-3 border-t border-slate-800 text-[11px] text-slate-500">
-            Interval: 3500ms • Feeds identical pipeline as manual mode
+            Interval: 3500ms • Direct Cloud Firestore Write Pipeline
           </div>
         </div>
 
@@ -303,7 +310,7 @@ export default function SensorSimulator({ system }) {
         </div>
       </div>
 
-      {/* Raw Sensor Input History Table */}
+      {/* Raw Sensor Input History Table (Persisted in Firestore sensorReadings) */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 border-b border-slate-800/80 pb-4">
           <div>
@@ -311,12 +318,12 @@ export default function SensorSimulator({ system }) {
               Raw Sensor Inputs History
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Live stream of raw incoming IoT ultrasonic sensor distance payloads (Input Layer)
+              Live stream of raw incoming IoT ultrasonic sensor distance payloads synced from Firestore <code className="text-indigo-300 font-mono">sensorReadings</code> collection
             </p>
           </div>
 
           <span className="text-[11px] font-mono text-slate-400 bg-slate-800 px-2.5 py-1 rounded border border-slate-700">
-            Raw Inputs Feed ({rawSensorInputs.length})
+            Firestore Readings ({rawSensorInputs.length})
           </span>
         </div>
 

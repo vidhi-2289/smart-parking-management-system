@@ -2,6 +2,8 @@ import React from 'react';
 import { Server, Database, Radio, Wifi } from 'lucide-react';
 
 export default function StatusCard({ status = {} }) {
+  const isConnected = status.database === 'Connected';
+
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between h-full">
       <div>
@@ -37,14 +39,24 @@ export default function StatusCard({ status = {} }) {
             </span>
           </div>
 
-          {/* Database (Not Connected) */}
+          {/* Database (Firestore) */}
           <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 text-xs">
             <div className="flex items-center gap-2.5 text-slate-300">
-              <Database className="w-4 h-4 text-amber-400" />
+              <Database className={`w-4 h-4 ${isConnected ? 'text-emerald-400' : 'text-amber-400'}`} />
               <span className="font-medium">Database (Firestore)</span>
             </div>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 font-semibold border border-amber-500/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+            <span
+              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-semibold border ${
+                isConnected
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                  : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+                }`}
+              />
               {status.database || 'Not Connected'}
             </span>
           </div>
@@ -52,7 +64,9 @@ export default function StatusCard({ status = {} }) {
       </div>
 
       <div className="mt-4 pt-3 border-t border-slate-800/80 text-[11px] text-slate-500 text-center">
-        Firebase Firestore cloud integration pending (Module 4)
+        {isConnected
+          ? 'Cloud Firestore real-time synchronization active'
+          : 'Connecting to Cloud Firestore...'}
       </div>
     </div>
   );

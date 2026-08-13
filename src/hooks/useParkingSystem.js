@@ -1,58 +1,31 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   initialParkingSlots,
-  initialActivities,
-  systemStatusData
+  initialActivities
 } from '../data/parkingData';
 import {
-  processSensorReading,
   calculateParkingStats,
   findBestAvailableSlot
 } from '../services/parkingService';
+import {
+  seedParkingSlotsIfEmpty,
+  subscribeToParkingSlots,
+  subscribeToParkingEvents,
+  subscribeToSensorReadings,
+  writeSensorReadingPipeline
+} from '../services/firestoreService';
 
 export function useParkingSystem() {
   const [slots, setSlots] = useState(initialParkingSlots);
   const [activities, setActivities] = useState(initialActivities);
-  const [status] = useState(systemStatusData);
+  const [rawSensorInputs, setRawSensorInputs] = useState([]);
   const [selectedSlotId, setSelectedSlotId] = useState('A3');
   const [highlightedSlotId, setHighlightedSlotId] = useState(null);
-
-  // Raw IoT Sensor Inputs History
-  const [rawSensorInputs, setRawSensorInputs] = useState([
-    {
-      id: 1,
-      sensorId: 'US-A2',
-      slotId: 'A2',
-      sensorType: 'Ultrasonic',
-      distanceCm: 12,
-      status: 'Vehicle Detected (<20cm)',
-      time: '2 min ago',
-      timestamp: new Date().toISOString()
-    },
-    {
-      id: 2,
-      sensorId: 'US-B4',
-      slotId: 'B4',
-      sensorType: 'Ultrasonic',
-      distanceCm: 65,
-      status: 'No Vehicle (>=20cm)',
-      time: '4 min ago',
-      timestamp: new Date().toISOString()
-    },
-    {
-      id: 3,
-      sensorId: 'US-A7',
-      slotId: 'A7',
-      sensorType: 'Ultrasonic',
-      distanceCm: 14,
-      status: 'Vehicle Detected (<20cm)',
-      time: '7 min ago',
-      timestamp: new Date().toISOString()
-    }
-  ]);
-
-  // Automatic Simulation State
   const [isAutoSimulating, setIsAutoSimulating] = useState(false);
+
+  // Cloud Firestore Connection State
+  const [isCloudConnected, setIsCloudConnected] = useState(false);
+  const [cloudError, setCloudError] = useState(null);
 
   // Derived statistics (recalculated automatically whenever `slots` changes)
   const stats = useMemo(() => calculateParkingStats(slots), [slots]);
@@ -67,44 +40,79 @@ export function useParkingSystem() {
   );
 
   /**
-   * Main pipeline entry point: Send a raw sensor reading from the input layer.
-   * Records raw payload AND triggers Module 2 processing logic.
+   * Initialize Firestore seeding and real-time listeners
    */
-  const sendSensorReading = useCallback((slotId, distanceCm) => {
-    const numericDistance = Number(distanceCm);
+  useEffect(() => {
+    let unsubSlots = null;
+    let unsubEvents = null;
+    let unsubReadings = null;
 
-    // 1. Record raw input payload
-    const rawInputPayload = {
-      id: Date.now() + Math.random(),
-      sensorId: `US-${slotId}`,
-      slotId: slotId,
-      sensorType: 'Ultrasonic',
-      distanceCm: numericDistance,
-      status: numericDistance < 20 ? 'Vehicle Detected (<20cm)' : 'No Vehicle (>=20cm)',
-      time: 'Just now',
-      timestamp: new Date().toISOString()
+    const initCloudSync = async () => {
+      try {
+        // 1. Seed initial 20 slots if Firestore collection is empty
+        await seedParkingSlotsIfEmpty();
+
+        // 2. Subscribe to parkingSlots real-time updates
+        unsubSlots = subscribeToParkingSlots(
+          (updatedSlots) => {
+            if (updatedSlots && updatedSlots.length > 0) {
+              setSlots(updatedSlots);
+              setIsCloudConnected(true);
+              setCloudError(null);
+            }
+          },
+          (err) => {
+            console.error('parkingSlots subscription error:', err);
+            setIsCloudConnected(false);
+            setCloudError(err.message);
+          }
+        );
+
+        // 3. Subscribe to real-time parkingEvents (Activity Feed)
+        unsubEvents = subscribeToParkingEvents(
+          (eventsList) => {
+            if (eventsList && eventsList.length > 0) {
+              setActivities(eventsList);
+            }
+          },
+          (err) => console.error('parkingEvents subscription error:', err)
+        );
+
+        // 4. Subscribe to real-time sensorReadings (Raw Sensor Inputs)
+        unsubReadings = subscribeToSensorReadings(
+          (readingsList) => {
+            if (readingsList && readingsList.length > 0) {
+              setRawSensorInputs(readingsList);
+            }
+          },
+          (err) => console.error('sensorReadings subscription error:', err)
+        );
+      } catch (err) {
+        console.error('Failed to initialize Cloud Firestore:', err);
+        setIsCloudConnected(false);
+        setCloudError(err.message);
+      }
     };
 
-    setRawSensorInputs((prev) => [rawInputPayload, ...prev.slice(0, 19)]);
+    initCloudSync();
 
-    // 2. Feed into Module 2 processing logic
-    setSlots((prevSlots) => {
-      const targetSlot = prevSlots.find((s) => s.id === slotId);
-      if (!targetSlot) return prevSlots;
-
-      const { updatedSlot, newActivityEvent } = processSensorReading(
-        targetSlot,
-        numericDistance
-      );
-
-      // Append transition event if state changed
-      if (newActivityEvent) {
-        setActivities((prev) => [newActivityEvent, ...prev.slice(0, 19)]);
-      }
-
-      return prevSlots.map((s) => (s.id === slotId ? updatedSlot : s));
-    });
+    return () => {
+      if (unsubSlots) unsubSlots();
+      if (unsubEvents) unsubEvents();
+      if (unsubReadings) unsubReadings();
+    };
   }, []);
+
+  /**
+   * Main pipeline entry point: Send a sensor reading to Firestore.
+   */
+  const sendSensorReading = useCallback(async (slotId, distanceCm) => {
+    try {
+      await writeSensorReadingPipeline(slotId, distanceCm, slots);
+    } catch (err) {
+      console.error('Error writing sensor reading to Firestore:', err);
+    }
+  }, [slots]);
 
   /**
    * Automatic simulation mode timer effect
@@ -114,11 +122,10 @@ export function useParkingSystem() {
 
     if (isAutoSimulating) {
       timerId = setInterval(() => {
-        // Pick a random slot from A1..A10, B1..B10
+        if (slots.length === 0) return;
         const randomIndex = Math.floor(Math.random() * slots.length);
         const randomSlot = slots[randomIndex];
 
-        // 40% chance occupied reading (5-15cm), 60% chance available reading (40-100cm)
         const isOccupiedReading = Math.random() < 0.4;
         const generatedDistance = isOccupiedReading
           ? Math.floor(Math.random() * 11) + 5    // 5 to 15 cm
@@ -161,7 +168,11 @@ export function useParkingSystem() {
     slots,
     activities,
     rawSensorInputs,
-    status,
+    status: {
+      cloudConnection: isCloudConnected ? 'Online' : 'Connecting...',
+      sensorNetwork: 'Active',
+      database: isCloudConnected ? 'Connected' : 'Connecting...'
+    },
     stats,
     selectedSlot,
     selectedSlotId,
@@ -171,6 +182,8 @@ export function useParkingSystem() {
     isAutoSimulating,
     toggleAutoSimulation,
     sendSensorReading,
-    handleFindBestSlot
+    handleFindBestSlot,
+    isCloudConnected,
+    cloudError
   };
 }
