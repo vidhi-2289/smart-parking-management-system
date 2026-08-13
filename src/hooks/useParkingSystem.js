@@ -27,8 +27,45 @@ export function useParkingSystem() {
   const [isCloudConnected, setIsCloudConnected] = useState(false);
   const [cloudError, setCloudError] = useState(null);
 
-  // Derived statistics (recalculated automatically whenever `slots` changes)
+  // Overall derived statistics
   const stats = useMemo(() => calculateParkingStats(slots), [slots]);
+
+  // Zone A statistics
+  const zoneAStats = useMemo(() => {
+    const zoneSlots = slots.filter(
+      (s) => s.zone === 'Zone A' || s.id.startsWith('A')
+    );
+    const total = zoneSlots.length || 10;
+    const occupied = zoneSlots.filter((s) => s.occupied).length;
+    const available = total - occupied;
+    const occupancyRate = total > 0 ? Math.round((occupied / total) * 100) : 0;
+    return { total, occupied, available, occupancyRate };
+  }, [slots]);
+
+  // Zone B statistics
+  const zoneBStats = useMemo(() => {
+    const zoneSlots = slots.filter(
+      (s) => s.zone === 'Zone B' || s.id.startsWith('B')
+    );
+    const total = zoneSlots.length || 10;
+    const occupied = zoneSlots.filter((s) => s.occupied).length;
+    const available = total - occupied;
+    const occupancyRate = total > 0 ? Math.round((occupied / total) * 100) : 0;
+    return { total, occupied, available, occupancyRate };
+  }, [slots]);
+
+  // Event activity summary counts
+  const eventStats = useMemo(() => {
+    const total = activities.length;
+    const entries = activities.filter(
+      (a) => a.eventType === 'vehicle_entered' || a.type === 'detected'
+    ).length;
+    const exits = activities.filter(
+      (a) => a.eventType === 'vehicle_left' || a.type === 'left'
+    ).length;
+    const latestEvent = activities[0] || null;
+    return { total, entries, exits, latestEvent };
+  }, [activities]);
 
   // Derived best slot
   const recommendedSlot = useMemo(() => findBestAvailableSlot(slots), [slots]);
@@ -49,10 +86,8 @@ export function useParkingSystem() {
 
     const initCloudSync = async () => {
       try {
-        // 1. Seed initial 20 slots if Firestore collection is empty
         await seedParkingSlotsIfEmpty();
 
-        // 2. Subscribe to parkingSlots real-time updates
         unsubSlots = subscribeToParkingSlots(
           (updatedSlots) => {
             if (updatedSlots && updatedSlots.length > 0) {
@@ -68,7 +103,6 @@ export function useParkingSystem() {
           }
         );
 
-        // 3. Subscribe to real-time parkingEvents (Activity Feed)
         unsubEvents = subscribeToParkingEvents(
           (eventsList) => {
             if (eventsList && eventsList.length > 0) {
@@ -78,7 +112,6 @@ export function useParkingSystem() {
           (err) => console.error('parkingEvents subscription error:', err)
         );
 
-        // 4. Subscribe to real-time sensorReadings (Raw Sensor Inputs)
         unsubReadings = subscribeToSensorReadings(
           (readingsList) => {
             if (readingsList && readingsList.length > 0) {
@@ -104,15 +137,18 @@ export function useParkingSystem() {
   }, []);
 
   /**
-   * Main pipeline entry point: Send a sensor reading to Firestore.
+   * Send sensor reading to Firestore pipeline
    */
-  const sendSensorReading = useCallback(async (slotId, distanceCm) => {
-    try {
-      await writeSensorReadingPipeline(slotId, distanceCm, slots);
-    } catch (err) {
-      console.error('Error writing sensor reading to Firestore:', err);
-    }
-  }, [slots]);
+  const sendSensorReading = useCallback(
+    async (slotId, distanceCm) => {
+      try {
+        await writeSensorReadingPipeline(slotId, distanceCm, slots);
+      } catch (err) {
+        console.error('Error writing sensor reading to Firestore:', err);
+      }
+    },
+    [slots]
+  );
 
   /**
    * Automatic simulation mode timer effect
@@ -174,6 +210,9 @@ export function useParkingSystem() {
       database: isCloudConnected ? 'Connected' : 'Connecting...'
     },
     stats,
+    zoneAStats,
+    zoneBStats,
+    eventStats,
     selectedSlot,
     selectedSlotId,
     setSelectedSlotId,

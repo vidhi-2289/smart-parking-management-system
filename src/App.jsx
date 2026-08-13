@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import SensorSimulator from './pages/SensorSimulator';
+import Activity from './pages/Activity';
+import Analytics from './pages/Analytics';
 import { useParkingSystem } from './hooks/useParkingSystem';
 
 export default function App() {
@@ -29,6 +31,10 @@ export default function App() {
       <main className="lg:pl-64 transition-all duration-300">
         {activeTab === 'simulator' ? (
           <SensorSimulator system={system} />
+        ) : activeTab === 'activity' ? (
+          <Activity system={system} />
+        ) : activeTab === 'analytics' ? (
+          <Analytics system={system} />
         ) : (
           <Dashboard
             system={system}

@@ -17,8 +17,8 @@ export default function Sidebar({ activeTab = 'dashboard', onTabChange }) {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, enabled: true },
     { id: 'live', label: 'Live Parking', icon: Car, enabled: true },
     { id: 'simulator', label: 'Sensor Simulator', icon: Cpu, enabled: true },
-    { id: 'activity', label: 'Activity', icon: History, enabled: false },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3, enabled: false }
+    { id: 'activity', label: 'Activity', icon: History, enabled: true },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3, enabled: true }
   ];
 
   return (
@@ -91,18 +91,11 @@ export default function Sidebar({ activeTab = 'dashboard', onTabChange }) {
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                     isActive
                       ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
-                      : item.enabled
-                      ? 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
-                      : 'text-slate-600 cursor-not-allowed opacity-70'
+                      : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-white' : item.enabled ? 'text-slate-400' : 'text-slate-600'}`} />
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
                   <span>{item.label}</span>
-                  {!item.enabled && (
-                    <span className="ml-auto text-[10px] uppercase font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-500 border border-slate-700/50">
-                      Module 5
-                    </span>
-                  )}
                 </button>
               );
             })}
